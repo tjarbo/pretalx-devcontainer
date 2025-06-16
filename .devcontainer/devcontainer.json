@@ -1,0 +1,19 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the
+// README at: https://github.com/devcontainers/templates/tree/main/src/python
+{
+  "name": "pretalx-devcontainer",
+  "image": "ghcr.io/tjarbo/pretalx-devcontainer/devcontainer:main",
+  "postCreateCommand": "${containerWorkspaceFolder}/.devcontainer/post-create.sh || /opt/pretalx-devcontainer/default-scripts/plugin-development/post-create.sh",
+  "postStartCommand": "${containerWorkspaceFolder}/.devcontainer/post-start.sh || /opt/pretalx-devcontainer/default-scripts/plugin-development/post-start.sh",
+  "containerEnv": {
+    "PRETALX_DATA_DIR": "${containerWorkspaceFolder}/.devcontainer/local"
+  },
+	"customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.debugpy"
+      ]
+    }
+  }
+}

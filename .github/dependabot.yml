@@ -1,0 +1,13 @@
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "fix"
+  # Configuration for Container images
+  - package-ecosystem: "docker"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "fix"
