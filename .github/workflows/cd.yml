@@ -28,7 +28,10 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
+      
+      - name: Inject project license
+        run: make inject-license
+      
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 

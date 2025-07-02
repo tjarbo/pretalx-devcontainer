@@ -21,6 +21,15 @@ printf " pretalx Plugin Dev Setup \n"
 printf "==========================\n"
 printf "${BLUE}Script: $0 ${NC}\n"
 
+# Install pretalx
+printf "${YELLOW_BOLD}==> Installing pretalx development package...${NC}\n";
+if python -m pip3 install --upgrade-strategy eager "pretalx[dev]"; then
+    printf "${GREEN}pretalx installed successfully.${NC}\n";
+else
+    printf "${RED}pretalx installation failed!${NC}\n";
+    exit 1
+fi
+
 # Install local plugin
 printf "${YELLOW_BOLD}==> Installing local plugin in editable mode...${NC}\n"
 if python -m pip install -e .; then
