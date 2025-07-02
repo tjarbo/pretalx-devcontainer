@@ -22,7 +22,7 @@ printf "${BLUE}Script: $0 ${NC}\n";
 
 # Install pretalx
 printf "${YELLOW_BOLD}==> Installing pretalx development package...${NC}\n";
-if python -m pip3 install --upgrade-strategy eager "pretalx[dev]"; then
+if python3 -m pip install --upgrade-strategy eager "pretalx[dev]"; then
     printf "${GREEN}pretalx installed successfully.${NC}\n";
 else
     printf "${RED}pretalx installation failed!${NC}\n";
