@@ -9,7 +9,7 @@ A ready-to-use devcontainer image and scripts to streamline plugin development f
 ## 🚦 Quick Start for a new plugin!
 1. **Generate a new plugin project using cookiecutter**
    - Similar to the [official guide for creating a new pretalx plugin](https://docs.pretalx.org/developer/plugins/plugins/), you can [Cookiecutter](https://cookiecutter.readthedocs.io/) to generate a new plugin repository from a template that contains the devcontainer files already.
-   - Run `uvx cookiecutter https://github.com/pretalx/pretalx-plugin-cookiecutter`
+   - Run `uvx cookiecutter https://github.com/tjarbo/pretalx-plugin-cookiecutter-devcontainer`
    - Fill in the prompts to generate the new plugin repository.
 2. **Open in VS Code**
    - Open your plugin repository in VS Code.
