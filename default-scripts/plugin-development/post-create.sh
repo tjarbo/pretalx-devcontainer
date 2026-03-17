@@ -86,6 +86,14 @@ else
     exit 1
 fi
 
+log_info "Installing local plugin in editable mode..."
+if python3 -m pip install -e .; then
+    log_success "Plugin installed successfully.\n"
+else
+    log_error "Plugin installation failed!\n"
+    exit 1
+fi
+
 log_info "Applying database migrations..."
 if python3 -m pretalx migrate; then
     log_success "Migrations applied successfully."
