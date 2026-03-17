@@ -1,9 +1,10 @@
-name: CI/CD - Container Image
+name: Build Container Image
 
 on:
   push:
     branches:
       - 'main'
+      - 'stable'
     tags:
       - 'v*'
   pull_request:
