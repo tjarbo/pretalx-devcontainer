@@ -12,4 +12,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
       - uses: paulhatch/semantic-version@v6.0.2
+        with:
+          debug: true
         
