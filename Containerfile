@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/devcontainers/python:1-3.12-bullseye
+FROM mcr.microsoft.com/devcontainers/python:3.12
 
 RUN apt update && \
     apt install -y libffi-dev gettext build-essential && \
