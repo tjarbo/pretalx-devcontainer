@@ -1,0 +1,6 @@
+# This is a local configuration file to pre-configure pretalx for development inside the devcontainer.
+# Feel free to modify it for you local needs during development.
+# It serves as a "just works" baseline.
+[site]
+debug = True
+url = http://localhost:8000

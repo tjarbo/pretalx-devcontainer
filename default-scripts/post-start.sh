@@ -5,5 +5,11 @@
 #
 # LICENSE_MARKER
 
-echo "Nothing to do";
+SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
+# shellcheck source=./lib/common.sh
+. "$SCRIPT_DIR/lib/common.sh"
+
+log_banner "pretalx Server Dev Setup"
+log_info "Nothing to do"
+log_setup_complete
 exit 0;

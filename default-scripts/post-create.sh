@@ -6,36 +6,26 @@
 #
 # LICENSE_MARKER
 
-# Color definitions
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW_BOLD='\033[1;33m'
-BLUE_BOLD='\033[1;34m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
+# shellcheck source=./lib/common.sh
+. "$SCRIPT_DIR/lib/common.sh"
 
-# Banner
-printf "${BLUE_BOLD}==========================\n";
-printf " pretalx Server Dev Setup \n";
-printf "==========================\n";
-printf "${BLUE}Script: $0 ${NC}\n";
+log_banner "pretalx Server Dev Setup"
 
-# Install pretalx
-printf "${YELLOW_BOLD}==> Installing pretalx development package...${NC}\n";
+log_info "Installing pretalx development package..."
 if python3 -m pip install --upgrade-strategy eager "pretalx[dev]"; then
-    printf "${GREEN}pretalx installed successfully.${NC}\n";
+    log_success "pretalx installed successfully."
 else
-    printf "${RED}pretalx installation failed!${NC}\n";
+    log_error "pretalx installation failed!"
     exit 1
 fi
 
-# Apply migrations
-printf "${YELLOW_BOLD}==> Applying database migrations...${NC}\n";
+log_info "Applying database migrations..."
 if python3 -m pretalx migrate; then
-    printf "${GREEN}Migrations applied successfully.${NC}\n";
+    log_success "Migrations applied successfully."
 else
-    printf "${RED}Migration failed!${NC}\n";
-    exit 1;
+    log_error "Migration failed!"
+    exit 1
 fi
 
-printf "${BLUE_BOLD}Setup complete. Happy coding!${NC}\n";
+log_setup_complete

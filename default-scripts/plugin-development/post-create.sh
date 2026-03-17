@@ -1,51 +1,135 @@
 #!/bin/sh
-# Default post-create.sh script for pretalx plugin development.
+# Default post-create.sh script for pretalx server development.
 # Overview:
 #   1. Installing pretalx
-#   2. Installing the plugin.
-#   3. Apply database migrations.
+#   2. Apply database migrations.
+#   3. (Optional) Initialize pretalx.
+#   4. (Optional) Collect static files.
+#   5. (Optional) Create a dummy event.
 #
 # LICENSE_MARKER
 
-# Color definitions
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW_BOLD='\033[1;33m'
-BLUE_BOLD='\033[1;34m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
+# shellcheck source=../lib/common.sh
+. "$SCRIPT_DIR/../lib/common.sh"
 
-# Banner
-printf "${BLUE_BOLD}==========================\n"
-printf " pretalx Plugin Dev Setup \n"
-printf "==========================\n"
-printf "${BLUE}Script: $0 ${NC}\n"
+# Help banner
+print_help() {
+    printf "${BLUE_BOLD}===========================\n"
+    printf "  pretalx Server Dev Setup  \n"
+    printf "===========================${NC}\n"
+    printf "\n";
+    printf "Usage:\n";
+    printf "  %s [OPTIONS]\n" "$0";
+    printf "\n";
+    printf "Options:\n";
+    printf "  --skip-pretalx-init     Skip the 'pretalx init' step.\n";
+    printf "  --skip-dummy-event      Skip the dummy event creation step.\n";
+    printf "  -h, --help              Show this help message and exit.\n";
+    printf "\n";
+    printf "Environment variables:\n";
+    printf "  PRETALX_DEVCONTAINER_SKIP_INIT=1          Same as --skip-pretalx-init\n";
+    printf "  PRETALX_DEVCONTAINER_SKIP_DUMMY_EVENT=1   Same as --skip-dummy-event\n";
+    printf "\n";
+}
 
-# Install pretalx
-printf "${YELLOW_BOLD}==> Installing pretalx development package...${NC}\n";
+# Default flag values (can be overridden by env vars)
+SKIP_PRETALX_INIT="${PRETALX_DEVCONTAINER_SKIP_INIT:-0}"
+SKIP_DUMMY_EVENT="${PRETALX_DEVCONTAINER_SKIP_DUMMY_EVENT:-0}"
+
+# These steps need non-empty values for all required init/superuser variables.
+REQUIRED_INIT_ENV_VARS="DJANGO_SUPERUSER_EMAIL DJANGO_SUPERUSER_PASSWORD PRETALX_INIT_ORGANISER_NAME PRETALX_INIT_ORGANISER_SLUG"
+MISSING_INIT_ENV_VARS=""
+for env_var in $REQUIRED_INIT_ENV_VARS; do
+    eval "env_value=\${$env_var:-}"
+    if [ -z "$env_value" ]; then
+        MISSING_INIT_ENV_VARS="$MISSING_INIT_ENV_VARS $env_var"
+    fi
+done
+
+HAS_REQUIRED_INIT_ENV_VARS=1
+if [ -n "$MISSING_INIT_ENV_VARS" ]; then
+    HAS_REQUIRED_INIT_ENV_VARS=0
+fi
+
+# Parse CLI flags
+for arg in "$@"; do
+    case "$arg" in
+        --skip-pretalx-init)
+            SKIP_PRETALX_INIT=1
+            ;;
+        --skip-dummy-event)
+            SKIP_DUMMY_EVENT=1
+            ;;
+        -h|--help)
+            print_help
+            exit 0
+            ;;
+        *)
+            log_unknown_argument_and_exit "$arg"
+            ;;
+    esac
+done
+
+log_banner " pretalx Server Dev Setup  "
+printf "${BLUE}Skip pretalx init:  %s${NC}\n" "$([ "$SKIP_PRETALX_INIT" = "1" ] && echo "yes" || echo "no")";
+printf "${BLUE}Skip dummy event:   %s${NC}\n" "$([ "$SKIP_DUMMY_EVENT" = "1" ] && echo "yes" || echo "no")";
+if [ "$HAS_REQUIRED_INIT_ENV_VARS" = "0" ]; then
+    log_warning "Missing required environment variables for pretalx init/create_test_event:$MISSING_INIT_ENV_VARS"
+    log_warning "Define them in .devcontainer/devcontainer.json (containerEnv) or your environment."
+fi
+log_info "Installing pretalx development package..."
 if python3 -m pip install --upgrade-strategy eager "pretalx[dev]"; then
-    printf "${GREEN}pretalx installed successfully.${NC}\n";
+    log_success "pretalx installed successfully."
 else
-    printf "${RED}pretalx installation failed!${NC}\n";
+    log_error "pretalx installation failed!"
     exit 1
 fi
 
-# Install local plugin
-printf "${YELLOW_BOLD}==> Installing local plugin in editable mode...${NC}\n"
-if python3 -m pip install -e .; then
-    printf "${GREEN}Plugin installed successfully.${NC}\n"
-else
-    printf "${RED}Plugin installation failed!${NC}\n"
-    exit 1
-fi
-
-# Apply migrations
-printf "${YELLOW_BOLD}==> Applying database migrations...${NC}\n"
+log_info "Applying database migrations..."
 if python3 -m pretalx migrate; then
-    printf "${GREEN}Migrations applied successfully.${NC}\n"
+    log_success "Migrations applied successfully."
 else
-    printf "${RED}Migration failed!${NC}\n"
+    log_error "Migration failed!"
     exit 1
 fi
 
-printf "${BLUE_BOLD}Setup complete. Happy coding!${NC}\n"
+log_info "Collecting static files..."
+if python3 -m pretalx collectstatic --noinput; then
+    log_success "Static files collected successfully."
+else
+    log_error "Static file collection failed!"
+    exit 1
+fi
+
+# Initialize pretalx
+if [ "$SKIP_PRETALX_INIT" = "1" ]; then
+    log_info "Skipping pretalx init (--skip-pretalx-init flag set)."
+elif [ "$HAS_REQUIRED_INIT_ENV_VARS" = "0" ]; then
+    log_warning "Skipping pretalx init because required DJANGO_* and PRETALX_INIT_* variables are missing."
+else
+    log_info "Initializing pretalx..."
+    if python3 -m pretalx init --no-input; then
+        log_success "Pretalx initialized successfully."
+    else
+        log_error "Pretalx initialization failed!"
+        exit 1
+    fi
+fi
+
+# Create dummy event
+if [ "$SKIP_DUMMY_EVENT" = "1" ]; then
+    log_info "Skipping dummy event creation (--skip-dummy-event flag set)."
+elif [ "$HAS_REQUIRED_INIT_ENV_VARS" = "0" ]; then
+    log_warning "Skipping dummy event creation because required DJANGO_* and PRETALX_INIT_* variables are missing."
+else
+    log_info "Creating dummy event..."
+    if python3 -m pretalx create_test_event; then
+        log_success "Dummy event created successfully."
+    else
+        log_error "Dummy event creation failed!"
+        exit 1
+    fi
+fi
+
+log_setup_complete

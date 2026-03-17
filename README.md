@@ -6,6 +6,18 @@ A ready-to-use devcontainer image and scripts to streamline plugin development f
 - A container runtime: [Docker](https://www.docker.com/) or [Podman](https://podman.io/).
 - An IDE or editor with [devcontainer](https://containers.dev/) support (e.g., VS Code) or you can use online services like [GitHub Codespaces](https://github.com/features/codespaces).
 
+## 🚦 Quick Start for a new plugin!
+1. **Generate a new plugin project using cookiecutter**
+   - Similar to the [official guide for creating a new pretalx plugin](https://docs.pretalx.org/developer/plugins/plugins/), you can [Cookiecutter](https://cookiecutter.readthedocs.io/) to generate a new plugin repository from a template that contains the devcontainer files already.
+   - Run `uvx cookiecutter https://github.com/pretalx/pretalx-plugin-cookiecutter`
+   - Fill in the prompts to generate the new plugin repository.
+2. **Open in VS Code**
+   - Open your plugin repository in VS Code.
+   - When prompted, click **"Reopen in Container"**. If not prompted, open the Command Palette (`Ctrl+Shift+P`), search for `Dev Containers: Reopen in Container`, and select it.
+   - VS Code will build and start the devcontainer automatically.
+3. **Start developing!** ✨
+   - The devcontainer will automatically install pretalx and its dependencies, apply database migrations, and create a dummy event for testing. You can run pretalx commands directly in the integrated terminal with `python3 -m pretalx runserver`. The credentials for the admin user are `superuser@pretalx.local:pretalx`.
+
 ## 🚦 Quick Start for your own plugin
 1. **Copy the `.devcontainer` folder**
    - Copy the `.devcontainer` folder from this repository to the root of your pretalx plugin development repository.
@@ -13,9 +25,8 @@ A ready-to-use devcontainer image and scripts to streamline plugin development f
    - Open your plugin repository in VS Code.
    - When prompted, click **"Reopen in Container"**. If not prompted, open the Command Palette (`Ctrl+Shift+P`), search for `Dev Containers: Reopen in Container`, and select it.
    - VS Code will build and start the devcontainer automatically.
-3. **Start developing!** ✨ Do not forget to initialize pretalx as per its original development guide.
-   1. `python manage.py init` to create an admin user, organiser and team
-   2. `python manage.py create_test_event` to create a test event.
+3. **Start developing!** ✨
+   - The devcontainer will automatically install pretalx and its dependencies, apply database migrations, and create a dummy event for testing. You can run pretalx commands directly in the integrated terminal with `python3 -m pretalx runserver`. The credentials for the admin user are `superuser@pretalx.local:pretalx`.
 
 ## 🧩 Example Projects
 _Example plugin projects and usage guides will be added soon._
