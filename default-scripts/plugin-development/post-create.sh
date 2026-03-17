@@ -117,12 +117,21 @@ elif [ "$HAS_REQUIRED_INIT_ENV_VARS" = "0" ]; then
     log_warning "Skipping pretalx init because required DJANGO_* and PRETALX_INIT_* variables are missing."
 else
     log_info "Initializing pretalx..."
-    if python3 -m pretalx init --no-input; then
+    init_output_file="$(mktemp)"
+    if python3 -m pretalx init --no-input >"$init_output_file" 2>&1; then
+        cat "$init_output_file"
         log_success "Pretalx initialized successfully."
     else
-        log_error "Pretalx initialization failed!"
-        exit 1
+        cat "$init_output_file"
+        if grep -Fq "CommandError: Error: That Email is already taken." "$init_output_file"; then
+            log_warning "Pretalx init skipped because the configured superuser email already exists. Continuing..."
+        else
+            log_error "Pretalx initialization failed!"
+            rm -f "$init_output_file"
+            exit 1
+        fi
     fi
+    rm -f "$init_output_file"
 fi
 
 # Create dummy event
@@ -132,12 +141,21 @@ elif [ "$HAS_REQUIRED_INIT_ENV_VARS" = "0" ]; then
     log_warning "Skipping dummy event creation because required DJANGO_* and PRETALX_INIT_* variables are missing."
 else
     log_info "Creating dummy event..."
-    if python3 -m pretalx create_test_event; then
+    create_event_output_file="$(mktemp)"
+    if python3 -m pretalx create_test_event >"$create_event_output_file" 2>&1; then
+        cat "$create_event_output_file"
         log_success "Dummy event created successfully."
     else
-        log_error "Dummy event creation failed!"
-        exit 1
+        cat "$create_event_output_file"
+        if grep -Fq "django.db.utils.IntegrityError: UNIQUE constraint failed: event_organiser.slug" "$create_event_output_file"; then
+            log_warning "Dummy event creation skipped because the organiser slug already exists. Continuing..."
+        else
+            log_error "Dummy event creation failed!"
+            rm -f "$create_event_output_file"
+            exit 1
+        fi
     fi
+    rm -f "$create_event_output_file"
 fi
 
 log_setup_complete
