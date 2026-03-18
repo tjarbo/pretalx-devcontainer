@@ -30,7 +30,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           fromTag: ${{ github.ref_name }}
-          toTag: v${{ steps.semver.outputs.previous_version }}"
+          toTag: v${{ steps.semver.outputs.previous_version }}
           writeToFile: false
 
       - name: Draft GitHub release
