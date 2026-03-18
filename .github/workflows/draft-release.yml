@@ -1,4 +1,4 @@
-name: Create Release
+name: Draft Release
 
 on:
   push:
@@ -24,6 +24,15 @@ jobs:
         with:
           debug: true
 
+      - name: Update CHANGELOG
+        id: changelog
+        uses: requarks/changelog-action@v1
+        with:
+          token: ${{ github.token }}
+          fromTag: ${{ github.ref_name }}
+          toTag: v${{ steps.semver.outputs.previous_version }}"
+          writeToFile: false
+
       - name: Draft GitHub release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -47,4 +56,4 @@ jobs:
             --target "${GITHUB_SHA}" \
             --title "$TAG" \
             --draft \
-            --generate-notes
+            --notes "${{ steps.changelog.outputs.changelog }}"
