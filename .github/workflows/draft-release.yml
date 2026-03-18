@@ -36,6 +36,7 @@ jobs:
       - name: Draft GitHub release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CHANGELOG: ${{ steps.changelog.outputs.changes }}
         run: |
           if [ "${{ steps.semver.outputs.changed }}" != "true" ]; then
             echo "No version change detected. Skipping release."
@@ -56,4 +57,4 @@ jobs:
             --target "${GITHUB_SHA}" \
             --title "$TAG" \
             --draft \
-            --notes "${{ steps.changelog.outputs.changelog }}"
+            --notes "$CHANGELOG"
