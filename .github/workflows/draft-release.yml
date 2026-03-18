@@ -26,9 +26,9 @@ jobs:
 
       - name: Update CHANGELOG
         id: changelog
-        uses: requarks/changelog-action@v1
+        uses: requarks/changelog-action@v1.10.3
         with:
-          token: ${{ github.token }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           fromTag: ${{ github.ref_name }}
           toTag: v${{ steps.semver.outputs.previous_version }}"
           writeToFile: false
