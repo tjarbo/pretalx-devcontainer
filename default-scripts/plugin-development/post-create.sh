@@ -37,6 +37,10 @@ print_help() {
 SKIP_PRETALX_INIT="${PRETALX_DEVCONTAINER_SKIP_INIT:-0}"
 SKIP_DUMMY_EVENT="${PRETALX_DEVCONTAINER_SKIP_DUMMY_EVENT:-0}"
 
+# Configuration file paths
+CFG_FILE="${PRETALX_DEVCONTAINER_CFG_FILE:-./.devcontainer/pretalx.cfg}"
+TEMPLATE_FILE="${PRETALX_DEVCONTAINER_TEMPLATE_FILE:-./.devcontainer/pretalx.cfg.template}"
+
 # These steps need non-empty values for all required init/superuser variables.
 REQUIRED_INIT_ENV_VARS="DJANGO_SUPERUSER_EMAIL DJANGO_SUPERUSER_PASSWORD PRETALX_INIT_ORGANISER_NAME PRETALX_INIT_ORGANISER_SLUG"
 MISSING_INIT_ENV_VARS=""
@@ -92,6 +96,17 @@ if python3 -m pip install -e .; then
 else
     log_error "Plugin installation failed!\n"
     exit 1
+fi
+
+# Ensure configuration file exists
+if [ -f "$CFG_FILE" ]; then
+    log_info "Configuration file already exists: $CFG_FILE"
+elif [ -f "$TEMPLATE_FILE" ]; then
+    log_info "Creating configuration file from template..."
+    cp "$TEMPLATE_FILE" "$CFG_FILE"
+    log_success "Configuration file created: $CFG_FILE"
+else
+    log_info "No template file found at $TEMPLATE_FILE, skipping configuration file creation."
 fi
 
 log_info "Applying database migrations..."
