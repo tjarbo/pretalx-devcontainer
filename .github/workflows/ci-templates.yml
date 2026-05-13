@@ -1,0 +1,117 @@
+name: "CI"
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build-image:
+    runs-on: ubuntu-latest
+    outputs:
+      candidate_image: ${{ steps.image_meta.outputs.candidate_image }}
+      candidate_image_artifact: ${{ steps.image_meta.outputs.candidate_image_artifact }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set candidate image tag
+        id: image_meta
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          ARTIFACT_SUFFIX="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${GITHUB_SHA:0:7}-${RANDOM}"
+          echo "candidate_image=local/pretalx-devcontainer:${GITHUB_SHA}" >> "${GITHUB_OUTPUT}"
+          echo "candidate_image_artifact=candidate-image-${ARTIFACT_SUFFIX}" >> "${GITHUB_OUTPUT}"
+
+      - name: Build image
+        id: build_image
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker build --file container/Containerfile --tag "${{ steps.image_meta.outputs.candidate_image }}" .
+
+      - name: Export candidate image
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker save "${{ steps.image_meta.outputs.candidate_image }}" --output candidate-image.tar
+
+      - name: Upload candidate image artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.image_meta.outputs.candidate_image_artifact }}
+          path: candidate-image.tar
+          retention-days: 1
+
+  test:
+    needs: [build-image]
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        template: [pretalx, pretalx-plugin]
+        image_variant: [stable, candidate]
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Resolve image for '${{ matrix.image_variant }}'
+        id: resolve_image
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ "${{ matrix.image_variant }}" == "stable" ]]; then
+            SELECTED_IMAGE="ghcr.io/tjarbo/pretalx-devcontainer/devcontainer:stable"
+          else
+            SELECTED_IMAGE="${{ needs.build-image.outputs.candidate_image }}"
+          fi
+
+          echo "selected_image=${SELECTED_IMAGE}" >> "${GITHUB_OUTPUT}"
+          echo "Using image: ${SELECTED_IMAGE}"
+
+      - name: Pull stable image from registry
+        if: matrix.image_variant == 'stable'
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker pull "${{ steps.resolve_image.outputs.selected_image }}"
+
+      - name: Download candidate image artifact
+        if: matrix.image_variant == 'candidate'
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.build-image.outputs.candidate_image_artifact }}
+          path: .
+
+      - name: Load candidate image
+        if: matrix.image_variant == 'candidate'
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker load --input candidate-image.tar
+
+      - name: Prepare template for selected image
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ ! -e src ]]; then
+            ln -s templates src
+          fi
+
+          TEMPLATE_PATH="templates/${{ matrix.template }}/.devcontainer/devcontainer.json"
+          if [[ ! -f "${TEMPLATE_PATH}" ]]; then
+            echo "Template file not found: ${TEMPLATE_PATH}" >&2
+            exit 1
+          fi
+
+          TMP_FILE="$(mktemp)"
+          jq --arg image "${{ steps.resolve_image.outputs.selected_image }}" '.image = $image' "${TEMPLATE_PATH}" > "${TMP_FILE}"
+          mv "${TMP_FILE}" "${TEMPLATE_PATH}"
+
+      - name: Smoke test for '${{ matrix.template }}' using '${{ matrix.image_variant }}'
+        id: smoke_test
+        uses: ./.github/actions/smoke-test
+        with:
+          template: "${{ matrix.template }}"
