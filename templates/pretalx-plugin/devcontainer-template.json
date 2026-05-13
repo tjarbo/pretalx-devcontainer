@@ -1,0 +1,14 @@
+{
+  "id": "pretalx-plugin",
+  "version": "0.0.1",
+  "name": "Pretalx Plugin",
+  "description": "A devcontainer for developing pretalx plugins.",
+  "keywords": [
+    "pretalx",
+    "plugin"
+  ],
+  "platforms": [
+    "Python",
+    "Node"
+  ]
+}

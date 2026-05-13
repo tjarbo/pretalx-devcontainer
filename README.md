@@ -1,6 +1,6 @@
-# pretalx Plugin Devcontainer
+# pretalx Devcontainer (Templates)
 
-A ready-to-use devcontainer image and scripts to streamline plugin development for the open source conference platform [pretalx](https://pretalx.org/). It includes all necessary tools and scripts to simplify setup and daily development tasks.
+Ready-to-use devcontainer image and templates with batteries included to streamline (plugin) development for the open source conference platform [pretalx](https://pretalx.org/). It includes all necessary tools and scripts to simplify setup and daily development tasks.
 
 ## ⚡ Prerequisites
 - A container runtime: [Docker](https://www.docker.com/) or [Podman](https://podman.io/).
@@ -19,8 +19,12 @@ A ready-to-use devcontainer image and scripts to streamline plugin development f
    - The devcontainer will automatically install pretalx and its dependencies, apply database migrations, and create a dummy event for testing. You can run pretalx commands directly in the integrated terminal with `python3 -m pretalx runserver`. The credentials for the admin user are `superuser@pretalx.local:pretalx`.
 
 ## 🚦 Quick Start for your own plugin
+
+> [!NOTE]
+> A contribution is pending to add the templates to the official devcontainer collections. This is mainly for users of the VSCode Devcontainer extension.
+
 1. **Copy the `.devcontainer` folder**
-   - Copy the `.devcontainer` folder from this repository to the root of your pretalx plugin development repository.
+   - Copy the `./src/pretalx-plugin/.devcontainer` folder from this repository to the root of your pretalx plugin development repository.
 2. **Open in VS Code**
    - Open your plugin repository in VS Code.
    - When prompted, click **"Reopen in Container"**. If not prompted, open the Command Palette (`Ctrl+Shift+P`), search for `Dev Containers: Reopen in Container`, and select it.
