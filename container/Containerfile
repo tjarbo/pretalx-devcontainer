@@ -2,6 +2,9 @@ FROM mcr.microsoft.com/devcontainers/python:3.12
 
 RUN apt update && \
     apt install -y libffi-dev gettext build-essential && \
-    pip3 install setuptools wheel Faker
+    pip3 install setuptools wheel Faker uv
+
+# Install just - task runner
+RUN curl -sSf --insecure https://just.systems/install.sh | bash -s -- --to /usr/local/bin
 
 COPY default-scripts /opt/pretalx-devcontainer/default-scripts
