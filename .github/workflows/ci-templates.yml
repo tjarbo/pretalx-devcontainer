@@ -55,13 +55,12 @@ jobs:
           path: candidate-image.tar
           retention-days: 1
 
-  test:
+  test-pretalx:
     needs: [build-image]
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        template: [pretalx, pretalx-plugin]
         image_variant: [stable, candidate]
     steps:
       - uses: actions/checkout@v6
@@ -71,7 +70,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          echo "[test] Resolving image for template='${{ matrix.template }}' variant='${{ matrix.image_variant }}'"
+          echo "[test-pretalx] Resolving image for variant='${{ matrix.image_variant }}'"
 
           if [[ "${{ matrix.image_variant }}" == "stable" ]]; then
             SELECTED_IMAGE="ghcr.io/tjarbo/pretalx-devcontainer/devcontainer:stable"
@@ -80,14 +79,14 @@ jobs:
           fi
 
           echo "selected_image=${SELECTED_IMAGE}" >> "${GITHUB_OUTPUT}"
-          echo "[test] Selected image: ${SELECTED_IMAGE}"
+          echo "[test-pretalx] Selected image: ${SELECTED_IMAGE}"
 
       - name: Pull stable image from registry
         if: matrix.image_variant == 'stable'
         shell: bash
         run: |
           set -euo pipefail
-          echo "[test] Pulling stable image ${{ steps.resolve_image.outputs.selected_image }}"
+          echo "[test-pretalx] Pulling stable image ${{ steps.resolve_image.outputs.selected_image }}"
           docker pull "${{ steps.resolve_image.outputs.selected_image }}"
 
       - name: Print available images after stable pull
@@ -95,7 +94,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          echo "[test] Docker images after stable pull:"
+          echo "[test-pretalx] Docker images after stable pull:"
           docker image ls --format 'table {{.Repository}}\t{{.Tag}}\t{{.ID}}\t{{.Size}}'
 
       - name: Download candidate image artifact
@@ -110,35 +109,35 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          echo "[test] Loading candidate image from artifact"
+          echo "[test-pretalx] Loading candidate image from artifact"
           docker load --input candidate-image.tar
-          echo "[test] Candidate image load complete"
+          echo "[test-pretalx] Candidate image load complete"
 
       - name: Print available images after candidate load
         if: matrix.image_variant == 'candidate'
         shell: bash
         run: |
           set -euo pipefail
-          echo "[test] Docker images after candidate load:"
+          echo "[test-pretalx] Docker images after candidate load:"
           docker image ls --format 'table {{.Repository}}\t{{.Tag}}\t{{.ID}}\t{{.Size}}'
 
-      - name: Prepare template for selected image
+      - name: Prepare pretalx template for selected image
         shell: bash
         run: |
           set -euo pipefail
-          echo "[test] Preparing template '${{ matrix.template }}' for image '${{ steps.resolve_image.outputs.selected_image }}'"
+          echo "[test-pretalx] Preparing template 'pretalx' for image '${{ steps.resolve_image.outputs.selected_image }}'"
 
           if [[ ! -e src ]]; then
-            echo "[test] Creating src -> templates symlink"
+            echo "[test-pretalx] Creating src -> templates symlink"
             ln -s templates src
           fi
 
-          TEMPLATE_PATH="templates/${{ matrix.template }}/.devcontainer/devcontainer.json"
+          TEMPLATE_PATH="templates/pretalx/.devcontainer/devcontainer.json"
           if [[ ! -f "${TEMPLATE_PATH}" ]]; then
             echo "Template file not found: ${TEMPLATE_PATH}" >&2
             exit 1
           fi
-          echo "[test] Updating image reference in ${TEMPLATE_PATH}"
+          echo "[test-pretalx] Updating image reference in ${TEMPLATE_PATH}"
 
           # devcontainer.json can include comments (JSONC), so avoid jq parsing here.
           sed -E -i 's|^([[:space:]]*"image"[[:space:]]*:[[:space:]]*").*(",?[[:space:]]*)$|\1${{ steps.resolve_image.outputs.selected_image }}\2|' "${TEMPLATE_PATH}"
@@ -147,10 +146,143 @@ jobs:
             echo "Failed to set image in ${TEMPLATE_PATH}" >&2
             exit 1
           fi
-          echo "[test] Image reference successfully updated"
+          echo "[test-pretalx] Image reference successfully updated"
 
-      - name: Smoke test for '${{ matrix.template }}' using '${{ matrix.image_variant }}'
+      - name: Smoke test for 'pretalx' using '${{ matrix.image_variant }}'
         id: smoke_test
         uses: ./.github/actions/smoke-test
         with:
-          template: "${{ matrix.template }}"
+          template: "pretalx"
+
+  test-pretalx-plugin:
+    needs: [build-image]
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        image_variant: [stable, candidate]
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Resolve image for '${{ matrix.image_variant }}'
+        id: resolve_image
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "[test-pretalx-plugin] Resolving image for variant='${{ matrix.image_variant }}'"
+
+          if [[ "${{ matrix.image_variant }}" == "stable" ]]; then
+            SELECTED_IMAGE="ghcr.io/tjarbo/pretalx-devcontainer/devcontainer:stable"
+          else
+            SELECTED_IMAGE="${{ needs.build-image.outputs.candidate_image }}"
+          fi
+
+          echo "selected_image=${SELECTED_IMAGE}" >> "${GITHUB_OUTPUT}"
+          echo "[test-pretalx-plugin] Selected image: ${SELECTED_IMAGE}"
+
+      - name: Pull stable image from registry
+        if: matrix.image_variant == 'stable'
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "[test-pretalx-plugin] Pulling stable image ${{ steps.resolve_image.outputs.selected_image }}"
+          docker pull "${{ steps.resolve_image.outputs.selected_image }}"
+
+      - name: Print available images after stable pull
+        if: matrix.image_variant == 'stable'
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "[test-pretalx-plugin] Docker images after stable pull:"
+          docker image ls --format 'table {{.Repository}}\t{{.Tag}}\t{{.ID}}\t{{.Size}}'
+
+      - name: Download candidate image artifact
+        if: matrix.image_variant == 'candidate'
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.build-image.outputs.candidate_image_artifact }}
+          path: .
+
+      - name: Load candidate image
+        if: matrix.image_variant == 'candidate'
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "[test-pretalx-plugin] Loading candidate image from artifact"
+          docker load --input candidate-image.tar
+          echo "[test-pretalx-plugin] Candidate image load complete"
+
+      - name: Print available images after candidate load
+        if: matrix.image_variant == 'candidate'
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "[test-pretalx-plugin] Docker images after candidate load:"
+          docker image ls --format 'table {{.Repository}}\t{{.Tag}}\t{{.ID}}\t{{.Size}}'
+
+      - name: Bootstrap plugin project via cookiecutter
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "[test-pretalx-plugin] Bootstrapping plugin project from cookiecutter"
+
+          python3 -m pip install --disable-pip-version-check --quiet cookiecutter
+
+          BOOTSTRAP_ROOT="$(mktemp -d)"
+          python3 -m cookiecutter --no-input \
+            --output-dir "${BOOTSTRAP_ROOT}" \
+            https://github.com/tjarbo/pretalx-plugin-cookiecutter-devcontainer \
+            human_name="pretalx JSON plugin" \
+            module_name="pretalx_json" \
+            short_description="pretalx plugin for custom JSON exports" \
+            author_name="Tobias Kunze" \
+            author_email="r@rixx.de" \
+            repo_url="https://github.com/rixx/pretalx-json" \
+            category="FEATURE"
+
+          GENERATED_DIR="$(find "${BOOTSTRAP_ROOT}" -mindepth 1 -maxdepth 1 -type d | head -n 1)"
+          if [[ -z "${GENERATED_DIR}" || ! -d "${GENERATED_DIR}" ]]; then
+            echo "Failed to generate project from cookiecutter" >&2
+            exit 1
+          fi
+
+          PREPARED_SRC_DIR="$(mktemp -d)/pretalx-plugin"
+          mkdir -p "${PREPARED_SRC_DIR}"
+          cp -R "${GENERATED_DIR}/." "${PREPARED_SRC_DIR}/"
+
+          rm -rf "${PREPARED_SRC_DIR}/.devcontainer"
+          cp -R "templates/pretalx-plugin/.devcontainer" "${PREPARED_SRC_DIR}/.devcontainer"
+          cp "templates/pretalx-plugin/devcontainer-template.json" "${PREPARED_SRC_DIR}/devcontainer-template.json"
+
+          rm -rf src
+          mkdir -p src
+          cp -R "${PREPARED_SRC_DIR}" "src/pretalx-plugin"
+
+          echo "[test-pretalx-plugin] Cookiecutter bootstrap complete"
+
+      - name: Prepare plugin template for selected image
+        shell: bash
+        run: |
+          set -euo pipefail
+          TEMPLATE_PATH="src/pretalx-plugin/.devcontainer/devcontainer.json"
+          if [[ ! -f "${TEMPLATE_PATH}" ]]; then
+            echo "Template file not found: ${TEMPLATE_PATH}" >&2
+            exit 1
+          fi
+
+          echo "[test-pretalx-plugin] Updating image reference in ${TEMPLATE_PATH}"
+
+          # devcontainer.json can include comments (JSONC), so avoid jq parsing here.
+          sed -E -i 's|^([[:space:]]*"image"[[:space:]]*:[[:space:]]*").*(",?[[:space:]]*)$|\1${{ steps.resolve_image.outputs.selected_image }}\2|' "${TEMPLATE_PATH}"
+
+          if ! grep -Eq '^[[:space:]]*"image"[[:space:]]*:[[:space:]]*"${{ steps.resolve_image.outputs.selected_image }}"' "${TEMPLATE_PATH}"; then
+            echo "Failed to set image in ${TEMPLATE_PATH}" >&2
+            exit 1
+          fi
+          echo "[test-pretalx-plugin] Image reference successfully updated"
+
+      - name: Smoke test for 'pretalx-plugin' using '${{ matrix.image_variant }}'
+        id: smoke_test
+        uses: ./.github/actions/smoke-test
+        with:
+          template: "pretalx-plugin"
