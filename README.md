@@ -49,5 +49,10 @@ Check the [official list of supporting editors](https://containers.dev/supportin
 You can still use the provided container image and scripts by running container runtime commands manually. Refer to your container runtime's documentation for running containers and mounting your project directory.
 
 ## 📄 License
-Checkout the [LICENSE](./LICENSE) file for details.
+
+This project contains source code derived from [Microsoft's devcontainers template-starter](https://github.com/devcontainers/template-starter), which is licensed under the MIT License. See the [full license text](https://raw.githubusercontent.com/devcontainers/template-starter/refs/heads/main/LICENSE) for details.
+
+Checkout the [LICENSE](./LICENSE) file for details about the licensing of this project.
+
+
 
