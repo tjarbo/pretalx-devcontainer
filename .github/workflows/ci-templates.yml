@@ -232,12 +232,12 @@ jobs:
           python3 -m cookiecutter --no-input \
             --output-dir "${BOOTSTRAP_ROOT}" \
             https://github.com/tjarbo/pretalx-plugin-cookiecutter-devcontainer \
-            human_name="pretalx JSON plugin" \
-            module_name="pretalx_json" \
-            short_description="pretalx plugin for custom JSON exports" \
-            author_name="Tobias Kunze" \
-            author_email="r@rixx.de" \
-            repo_url="https://github.com/rixx/pretalx-json" \
+            human_name="pretalx DUMMY plugin" \
+            module_name="pretalx_dummy" \
+            short_description="pretalx plugin for testing purposes" \
+            author_name="Pretalx Devcontainer Maintainers" \
+            author_email="maintainer@pretalx.local" \
+            repo_url="https://pretalx.local/devcontainers/pretalx-dummy" \
             category="FEATURE"
 
           GENERATED_DIR="$(find "${BOOTSTRAP_ROOT}" -mindepth 1 -maxdepth 1 -type d | head -n 1)"
