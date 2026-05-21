@@ -3,8 +3,8 @@
 {
   "name": "pretalx-plugin-devcontainer",
   "image": "ghcr.io/tjarbo/pretalx-devcontainer/devcontainer:stable",
-  "postCreateCommand": "/opt/pretalx-devcontainer/default-scripts/plugin-development/post-create.sh && ${containerWorkspaceFolder}/.devcontainer/post-create.sh || true",
-  "postStartCommand": "/opt/pretalx-devcontainer/default-scripts/plugin-development/post-start.sh && ${containerWorkspaceFolder}/.devcontainer/post-start.sh || true",
+  "postCreateCommand": "/opt/pretalx-devcontainer/default-scripts/plugin-development/post-create.sh && (${containerWorkspaceFolder}/.devcontainer/post-create.sh || true)",
+  "postStartCommand": "/opt/pretalx-devcontainer/default-scripts/plugin-development/post-start.sh && (${containerWorkspaceFolder}/.devcontainer/post-start.sh || true)",
   "containerEnv": {
     "PRETALX_DATA_DIR": "${containerWorkspaceFolder}/.devcontainer/local",
     "PRETALX_CONFIG_FILE": "${containerWorkspaceFolder}/.devcontainer/pretalx.cfg",
