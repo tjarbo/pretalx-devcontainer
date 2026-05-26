@@ -42,7 +42,7 @@ jobs:
         uses: paulhatch/semantic-version@v6.0.2
         with:
           debug: true
-          tag_prefix: "container@v"
+          tag_prefix: "container@"
           change_path: "container"
 
       - name: Update CHANGELOG
@@ -75,7 +75,7 @@ jobs:
 
           TAG="${{ steps.semver.outputs.version_tag }}"
           if [ -z "$TAG" ]; then
-            TAG="container@v${{ steps.semver.outputs.version }}"
+            TAG="container@${{ steps.semver.outputs.version }}"
           fi
 
           if gh release view "$TAG" >/dev/null 2>&1; then
@@ -131,9 +131,9 @@ jobs:
           tags: |
             type=ref,event=branch
             type=ref,event=pr
-            type=semver,pattern={{version}}
-            type=semver,pattern=v{{major}}
-            type=semver,pattern=v{{major}}.{{minor}}
+            type=semver,pattern={{version}},match=container@(\d.\d.\d)$
+            type=semver,pattern=v{{major}},match=container@(\d.\d.\d)$
+            type=semver,pattern=v{{major}}.{{minor}},match=container@(\d.\d.\d)$
 
       - name: Build and push
         uses: docker/build-push-action@v6
