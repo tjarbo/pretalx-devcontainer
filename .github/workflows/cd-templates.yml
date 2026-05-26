@@ -15,15 +15,6 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - name: "Publish Templates"
-        uses: devcontainers/action@v1
-        with:
-          publish-templates: ${{ github.ref_name == 'stable' }}
-          base-path-to-templates: "./templates"
-          generate-docs: "true"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Create PR for Documentation
         if: ${{ github.ref_name == 'main' }}
         env:
@@ -50,3 +41,12 @@ jobs:
               git push origin "$branch"
               gh pr create --title "$message" --body "$message"
           fi
+
+      - name: "Publish Templates"
+        uses: devcontainers/action@v1
+        with:
+          publish-templates: ${{ github.ref_name == 'stable' }}
+          base-path-to-templates: "./templates"
+          generate-docs: "true"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

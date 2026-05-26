@@ -1,0 +1,14 @@
+{
+  "id": "pretalx",
+  "version": "0.0.1",
+  "name": "Pretalx",
+  "description": "A devcontainer for developing on pretalx (Open Source Software).",
+  "keywords": [
+    "pretalx",
+    "oss"
+  ],
+  "platforms": [
+    "Python",
+    "Node"
+  ]
+}
