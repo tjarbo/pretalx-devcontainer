@@ -51,7 +51,7 @@ jobs:
         with:
           token: ${{ github.token }}
           fromTag: ${{ github.ref_name }}
-          toTag: v${{ steps.semver.outputs.previous_version }}"
+          toTag: container@${{ steps.semver.outputs.previous_version }}
           writeToFile: false
 
       - name: Comment changelog and new version number on commit
