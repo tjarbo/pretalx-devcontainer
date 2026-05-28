@@ -49,7 +49,7 @@ jobs:
         id: changelog
         uses: requarks/changelog-action@v1.10.3
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ github.token }}
           fromTag: ${{ github.ref_name }}
           toTag: v${{ steps.semver.outputs.previous_version }}"
           writeToFile: false
