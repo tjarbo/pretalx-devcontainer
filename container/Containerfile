@@ -2,7 +2,11 @@ FROM mcr.microsoft.com/devcontainers/python:3.14
 
 RUN apt update && \
     apt install -y libffi-dev gettext build-essential && \
-    pip3 install setuptools wheel Faker uv
+    pip3 install setuptools wheel Faker uv && \
+    # Adding redis within the container image to include all the necessary dependencies for pretalx.
+    # This reduces the maintenance work for devcontainer users to upgrade their setup just because pretalx adds a new dependency.
+    apt install -y redis-server && \
+    service redis-server start
 
 # Install just - task runner
 RUN curl -sSf --insecure https://just.systems/install.sh | bash -s -- --to /usr/local/bin
