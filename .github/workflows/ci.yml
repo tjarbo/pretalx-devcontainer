@@ -12,7 +12,7 @@ jobs:
       candidate_image: ${{ steps.image_meta.outputs.candidate_image }}
       candidate_image_artifact: ${{ steps.image_meta.outputs.candidate_image_artifact }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Set candidate image tag
         id: image_meta
@@ -63,7 +63,7 @@ jobs:
       matrix:
         image_variant: [stable, candidate]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Resolve image for '${{ matrix.image_variant }}'
         id: resolve_image
@@ -162,7 +162,7 @@ jobs:
       matrix:
         image_variant: [stable, candidate]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Resolve image for '${{ matrix.image_variant }}'
         id: resolve_image
@@ -224,10 +224,13 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          echo "[test-pretalx-plugin] Installing cookiecutter and uv"
+          python3 -m pip install --disable-pip-version-check --quiet cookiecutter uv
+          
+          echo "[test-pretalx-plugin] Installing just"
+          uv tool install rust-just
+
           echo "[test-pretalx-plugin] Bootstrapping plugin project from cookiecutter"
-
-          python3 -m pip install --disable-pip-version-check --quiet cookiecutter
-
           BOOTSTRAP_ROOT="$(mktemp -d)"
           python3 -m cookiecutter --no-input \
             --output-dir "${BOOTSTRAP_ROOT}" \
