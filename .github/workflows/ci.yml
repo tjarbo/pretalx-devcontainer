@@ -224,10 +224,13 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          echo "[test-pretalx-plugin] Bootstrapping plugin project from cookiecutter"
-
+          echo "[test-pretalx-plugin] Installing cookiecutter and uv"
           python3 -m pip install --disable-pip-version-check --quiet cookiecutter uv
+          
+          echo "[test-pretalx-plugin] Installing just"
+          uv tool install rust-just
 
+          echo "[test-pretalx-plugin] Bootstrapping plugin project from cookiecutter"
           BOOTSTRAP_ROOT="$(mktemp -d)"
           python3 -m cookiecutter --no-input \
             --output-dir "${BOOTSTRAP_ROOT}" \
