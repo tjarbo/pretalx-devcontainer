@@ -1,17 +1,19 @@
 # This workflow ensure automated releases for any change related to the container image.
 # The triggers are:
-# - Weekly on Sundays at midnight (UTC) to ensure regular base image updates. These cause a new fix release.
-# - On every push to the main branch to ensure that any change related to the container image is released.
+# - On every push to the main and stable branches to ensure that any change related to the container image is released.
+# - On pull requests targeting main and stable to validate the container image build without publishing.
 
-name: CD - Container Image
+name: CI/CD - Container Image
 
 on:
   push:
     branches:
       - 'main'
       - 'stable'
-    tags:
-      - 'container@*'  
+  pull_request:
+    branches:
+      - 'main'
+      - 'stable'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -26,10 +28,9 @@ env:
   IMAGE_NAME: ${{ github.repository }}/devcontainer
 
 jobs:
-  create-release:
-    name: Create Release
+  release-build-and-push:
+    name: Release, Build and Push
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/stable')
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
@@ -55,7 +56,7 @@ jobs:
           writeToFile: false
 
       - name: Comment changelog and new version number on commit
-        if: github.ref == 'refs/heads/main'
+        if: github.event_name == 'pull_request'
         uses: peter-evans/commit-comment@v4
         with:
           body: |
@@ -63,37 +64,13 @@ jobs:
             Changelog:
             ${{ steps.changelog.outputs.changelog }}
 
-      - name: Create GitHub release
-        if: github.ref == 'refs/heads/stable'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Split semantic version for tag aliases
+        id: version_parts
         run: |
-          if [ "${{ steps.semver.outputs.changed }}" != "true" ]; then
-            echo "No version change detected. Skipping release."
-            exit 0
-          fi
-
-          TAG="${{ steps.semver.outputs.version_tag }}"
-          if [ -z "$TAG" ]; then
-            TAG="container@${{ steps.semver.outputs.version }}"
-          fi
-
-          if gh release view "$TAG" >/dev/null 2>&1; then
-            echo "Release $TAG already exists. Skipping."
-            exit 0
-          fi
-
-          gh release create "$TAG" \
-            --target "${GITHUB_SHA}" \
-            --title "$TAG" \
-            --notes "${{ steps.changelog.outputs.changelog }}"
-        
-  build-and-push:
-    runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main'
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v7
+          VERSION="${{ steps.semver.outputs.version }}"
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
+          echo "major=$MAJOR" >> "$GITHUB_OUTPUT"
+          echo "minor=$MINOR" >> "$GITHUB_OUTPUT"
       
       - name: Inject project license
         run: make inject-license
@@ -116,7 +93,7 @@ jobs:
         uses: docker/setup-qemu-action@v4
 
       - name: Log in to GitHub Container Registry
-        if: github.event_name != 'pull_request'
+        if: github.event_name == 'push'
         uses: docker/login-action@v4
         with:
           registry: ${{ env.REGISTRY }}
@@ -131,9 +108,9 @@ jobs:
           tags: |
             type=ref,event=branch
             type=ref,event=pr
-            type=semver,pattern={{version}},match=container@(\d.\d.\d)$
-            type=semver,pattern=v{{major}},match=container@(\d.\d.\d)$
-            type=semver,pattern=v{{major}}.{{minor}},match=container@(\d.\d.\d)$
+            type=raw,value=${{ steps.semver.outputs.version }},enable=${{ github.ref == 'refs/heads/stable' && steps.semver.outputs.changed == 'true' }}
+            type=raw,value=v${{ steps.version_parts.outputs.major }},enable=${{ github.ref == 'refs/heads/stable' && steps.semver.outputs.changed == 'true' }}
+            type=raw,value=v${{ steps.version_parts.outputs.major }}.${{ steps.version_parts.outputs.minor }},enable=${{ github.ref == 'refs/heads/stable' && steps.semver.outputs.changed == 'true' }}
 
       - name: Build and push
         uses: docker/build-push-action@v7
@@ -142,6 +119,26 @@ jobs:
           file: container/Containerfile
           platforms: linux/amd64,linux/arm64
           load: true
-          push: ${{ github.event_name != 'pull_request' }}
+          push: ${{ github.event_name == 'push' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Create GitHub release
+        if: github.event_name == 'push' && github.ref == 'refs/heads/stable' && steps.semver.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ steps.semver.outputs.version_tag }}"
+          if [ -z "$TAG" ]; then
+            TAG="container@${{ steps.semver.outputs.version }}"
+          fi
+
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG already exists. Skipping."
+            exit 0
+          fi
+
+          gh release create "$TAG" \
+            --target "${GITHUB_SHA}" \
+            --title "$TAG" \
+            --notes "${{ steps.changelog.outputs.changelog }}"
