@@ -226,7 +226,7 @@ jobs:
           set -euo pipefail
           echo "[test-pretalx-plugin] Bootstrapping plugin project from cookiecutter"
 
-          python3 -m pip install --disable-pip-version-check --quiet cookiecutter
+          python3 -m pip install --disable-pip-version-check --quiet cookiecutter uv
 
           BOOTSTRAP_ROOT="$(mktemp -d)"
           python3 -m cookiecutter --no-input \
