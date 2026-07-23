@@ -9,6 +9,6 @@ RUN apt update && \
     service redis-server start
 
 # Install just - task runner
-RUN curl -sSf --insecure https://just.systems/install.sh | bash -s -- --to /usr/local/bin
+RUN uv tool install rust-just --directory /usr/local/bin
 
 COPY default-scripts /opt/pretalx-devcontainer/default-scripts
