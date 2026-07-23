@@ -5,10 +5,14 @@ RUN apt update && \
     pip3 install setuptools wheel Faker uv && \
     # Adding redis within the container image to include all the necessary dependencies for pretalx.
     # This reduces the maintenance work for devcontainer users to upgrade their setup just because pretalx adds a new dependency.
-    apt install -y redis-server && \
-    service redis-server start
+    apt install -y redis-server
 
 # Install just - task runner
-RUN curl -sSf --insecure https://just.systems/install.sh | bash -s -- --to /usr/local/bin
+RUN uv tool install rust-just --directory /usr/local/bin
 
 COPY default-scripts /opt/pretalx-devcontainer/default-scripts
+
+RUN chmod +x /opt/pretalx-devcontainer/default-scripts/start-container.sh
+
+ENTRYPOINT ["/opt/pretalx-devcontainer/default-scripts/start-container.sh"]
+CMD ["sleep", "infinity"]
