@@ -10,6 +10,8 @@ on:
     branches:
       - 'main'
       - 'stable'
+    paths:
+      - container/**
   pull_request:
     branches:
       - 'main'
@@ -48,6 +50,7 @@ jobs:
 
       - name: Update CHANGELOG
         id: changelog
+        if: steps.semver.outputs.changed == 'true'
         uses: requarks/changelog-action@v1.10.3
         with:
           token: ${{ github.token }}
@@ -56,7 +59,7 @@ jobs:
           writeToFile: false
 
       - name: Comment changelog and new version number on commit
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && steps.semver.outputs.changed == 'true'
         uses: peter-evans/commit-comment@v4
         with:
           body: |
@@ -119,7 +122,7 @@ jobs:
           file: container/Containerfile
           platforms: linux/amd64,linux/arm64
           load: true
-          push: ${{ github.event_name == 'push' }}
+          push: ${{ github.event_name == 'push' }} 
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
